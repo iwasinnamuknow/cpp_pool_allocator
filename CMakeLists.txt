@@ -15,8 +15,6 @@ FetchContent_MakeAvailable (tracy)
 
 find_package(tracy CONFIG REQUIRED)
 
-add_subdirectory(${tracy_SOURCE_DIR})
-
 project(pool_allocator)
 
 set(CMAKE_CXX_STANDARD 20)
