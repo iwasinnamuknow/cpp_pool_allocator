@@ -46,12 +46,12 @@ struct Object {
 
     static void *operator new(std::size_t size) {
         auto ptr = allocator.allocate(size);
-        //TracyAlloc(ptr, sizeof(Object));
+        TracyAlloc(ptr, sizeof(Object));
         return ptr;
     }
 
     static void operator delete(void *ptr, std::size_t size) {
-        //TracyFree(ptr);
+        TracyFree(ptr);
         return allocator.deallocate(ptr, size);
     }
 };

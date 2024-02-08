@@ -66,7 +66,6 @@ Chunk *PoolAllocator::allocateBlock(std::size_t chunkSize) {
 
     // The first chunk of the new block.
     auto *blockBegin = reinterpret_cast<Chunk *>(malloc(blockSize));
-    TracyAlloc(blockBegin, sizeof(blockSize));
 
     // Once the block is allocated, we need to chain all
     // the chunks in this block:
