@@ -26,8 +26,8 @@
 #define POOL_ALLOCATOR_POOLALLOCATOR_HPP
 
 #include <cstdint>
+#include <list>
 #include <tracy/Tracy.hpp>
-#include "Chunk.hpp"
 
 /**
  * The allocator class.
@@ -42,27 +42,28 @@
  */
 class PoolAllocator {
 public:
-    PoolAllocator(std::size_t chunksPerBlock)
-            : mChunksPerBlock(chunksPerBlock) {}
+    PoolAllocator() = default;
+    ~PoolAllocator();
 
     void* allocate(std::size_t size);
     void deallocate(void *ptr, std::size_t size);
+
+    std::size_t getAllocatedSize() const;
 
 private:
     /**
      * Number of chunks per larger block.
      */
-    std::size_t mChunksPerBlock;
+    std::size_t m_chunks_per_block{128};
+    std::size_t m_chunk_size{0};
 
-    /**
-     * Allocation pointer.
-     */
-    Chunk *mAlloc = nullptr;
+    std::list<void*> m_free_list{};
+    std::list<void*> m_blocks{};
 
     /**
      * Allocates a larger block (pool) for chunks.
      */
-    Chunk *allocateBlock(std::size_t chunk_size);
+    void* allocateBlock(std::size_t chunk_size);
 };
 
 #endif //POOL_ALLOCATOR_POOLALLOCATOR_HPP
