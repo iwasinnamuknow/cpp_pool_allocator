@@ -46,18 +46,18 @@ struct Object {
 
     static void *operator new(std::size_t size) {
         auto ptr = allocator.allocate(size);
-        TracyAllocN(ptr, sizeof(Object), "Object");
+        TracyAlloc(ptr, sizeof(Object));
         return ptr;
     }
 
     static void operator delete(void *ptr, std::size_t size) {
-        TracyFreeN(ptr, "Object");
+        TracyFree(ptr);
         return allocator.deallocate(ptr, size);
     }
 };
 
 // Instantiate our allocator, using 8 chunks per block:
 
-PoolAllocator Object::allocator{};
+PoolAllocator Object::allocator{20};
 
 #endif //POOL_ALLOCATOR_OBJECT_HPP

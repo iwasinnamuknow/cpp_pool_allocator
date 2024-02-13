@@ -22,47 +22,18 @@
  * SOFTWARE.
  */
 
-#ifndef POOL_ALLOCATOR_POOLALLOCATOR_HPP
-#define POOL_ALLOCATOR_POOLALLOCATOR_HPP
+#ifndef POOL_ALLOCATOR_CHUNK_HPP
+#define POOL_ALLOCATOR_CHUNK_HPP
 
-#include <cstdint>
-#include <tracy/Tracy.hpp>
-#include "Chunk.hpp"
-
-/**
- * The allocator class.
- *
- * Features:
- *
- *   - Parametrized by number of chunks per block
- *   - Keeps track of the allocation pointer
- *   - Bump-allocates chunks
- *   - Requests a new larger block when needed
- *
- */
-class PoolAllocator {
-public:
-    PoolAllocator(std::size_t chunksPerBlock)
-            : mChunksPerBlock(chunksPerBlock) {}
-
-    void* allocate(std::size_t size);
-    void deallocate(void *ptr, std::size_t size);
-
-private:
+struct Chunk {
     /**
-     * Number of chunks per larger block.
+     * When a chunk is free, the `next` contains the
+     * address of the next chunk in a list.
+     *
+     * When it's allocated, this space is used by
+     * the user.
      */
-    std::size_t mChunksPerBlock;
-
-    /**
-     * Allocation pointer.
-     */
-    Chunk *mAlloc = nullptr;
-
-    /**
-     * Allocates a larger block (pool) for chunks.
-     */
-    Chunk *allocateBlock(std::size_t chunk_size);
+    Chunk *next;
 };
 
-#endif //POOL_ALLOCATOR_POOLALLOCATOR_HPP
+#endif //POOL_ALLOCATOR_CHUNK_HPP

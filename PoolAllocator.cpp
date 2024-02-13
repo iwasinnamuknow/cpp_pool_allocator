@@ -24,7 +24,6 @@
 
 #include "PoolAllocator.hpp"
 #include <iostream>
-#include <cassert>
 
 /**
  * Returns the first free chunk in the block.
@@ -36,22 +35,23 @@ void *PoolAllocator::allocate(std::size_t size) {
 
     // No chunks left in the current block, or no any block
     // exists yet. Allocate a new one, passing the chunk size:
-    if (m_free_list.empty()) {
-        m_blocks.push_back(allocateBlock(size));
+
+    if (mAlloc == nullptr) {
+        mAlloc = allocateBlock(size);
     }
 
-    {
-        // the allocation pointer:
-        auto* free_chunk = m_free_list.front();
-        m_free_list.pop_front();
+    // the allocation pointer:
 
-        // Advance (bump) the allocation pointer to the next chunk.
-        //
-        // When no chunks left, the `mAlloc` will be set to `nullptr`, and
-        // this will cause allocation of a new block on the next request:
+    Chunk *freeChunk = mAlloc;
 
-        return free_chunk;
-    }
+    // Advance (bump) the allocation pointer to the next chunk.
+    //
+    // When no chunks left, the `mAlloc` will be set to `nullptr`, and
+    // this will cause allocation of a new block on the next request:
+
+    mAlloc = mAlloc->next;
+
+    return freeChunk;
 }
 
 /**
@@ -59,33 +59,25 @@ void *PoolAllocator::allocate(std::size_t size) {
  *
  * Returns a Chunk pointer set to the beginning of the block.
  */
-void* PoolAllocator::allocateBlock(std::size_t chunkSize) {
+Chunk *PoolAllocator::allocateBlock(std::size_t chunkSize) {
+    std::cout << "\nAllocating block (" << mChunksPerBlock << " chunks):\n\n";
 
-    ZoneScopedN("PA:allocateBlock");
-
-    if (m_chunk_size == 0) {
-        m_chunk_size = chunkSize;
-    } else {
-        assert((m_chunk_size == chunkSize) && "Chunk size cannot vary");
-    }
-
-    //std::cout << "\nAllocating block (" << m_chunks_per_block << " chunks):\n\n";
-
-    size_t expansion_modifier = (1 << m_blocks.size());
-    assert(expansion_modifier > 0);
-    size_t chunks = m_chunks_per_block * expansion_modifier;
-    size_t blockSize = chunks * chunkSize;
+    size_t blockSize = mChunksPerBlock * chunkSize;
 
     // The first chunk of the new block.
-    auto *blockBegin = malloc(blockSize);
-
-    TracyAllocN(blockBegin, blockSize, "PA_block");
+    auto *blockBegin = reinterpret_cast<Chunk *>(malloc(blockSize));
 
     // Once the block is allocated, we need to chain all
     // the chunks in this block:
-    for (int i = 0; i < chunks - 1; ++i) {
-        m_free_list.push_back(reinterpret_cast<void *>(reinterpret_cast<char *>(blockBegin) + (chunkSize * i)));
+
+    Chunk *chunk = blockBegin;
+
+    for (int i = 0; i < mChunksPerBlock - 1; ++i) {
+        chunk->next = reinterpret_cast<Chunk *>(reinterpret_cast<char *>(chunk) + chunkSize);
+        chunk = chunk->next;
     }
+
+    chunk->next = nullptr;
 
     return blockBegin;
 }
@@ -94,22 +86,14 @@ void* PoolAllocator::allocateBlock(std::size_t chunkSize) {
  * Puts the chunk into the front of the chunks list.
  */
 void PoolAllocator::deallocate(void *chunk, size_t size) {
-    ZoneScopedN("PA:deallocate");
-    m_free_list.push_back(chunk);
-}
 
-PoolAllocator::~PoolAllocator() {
+    // The freed chunk's next pointer points to the
+    // current allocation pointer:
 
-    // free each block and remove it from the allocation list
-    for (auto block : m_blocks) {
-        std::free(block);
-        TracyFreeN(block, "PA_block");
-    }
+    reinterpret_cast<Chunk *>(chunk)->next = mAlloc;
 
-    m_blocks.clear();
-    m_free_list.clear();
-}
+    // And the allocation pointer is now set
+    // to the returned (free) chunk:
 
-std::size_t PoolAllocator::getAllocatedSize() const {
-    return m_chunks_per_block * m_chunk_size * m_blocks.size();
+    mAlloc = reinterpret_cast<Chunk *>(chunk);
 }

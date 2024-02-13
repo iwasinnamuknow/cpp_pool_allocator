@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(TRACY_NO_EXIT on)
-set(TRACY_ENABLE on)
+set(TRACY_NO_EXIT 1)
 
 include(FetchContent)
 FetchContent_Declare (
@@ -21,4 +20,5 @@ project(pool_allocator)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(pool_allocator main.cpp PoolAllocator.cpp)
-target_link_libraries(pool_allocator PUBLIC Tracy::TracyClient)
+target_include_directories(pool_allocator PUBLIC ${tracy_SOURCE_DIR}/public)
+target_link_libraries(pool_allocator PUBLIC TracyClient)
