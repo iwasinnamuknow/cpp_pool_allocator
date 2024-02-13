@@ -22,9 +22,13 @@
 // SOFTWARE.
 //
 
+#include <tracy/Tracy.hpp>
+#include <cstdlib>
 #include "PoolAllocator.hpp"
 
 auto PoolAllocator::allocate(std::size_t size) -> void* {
+
+    ZoneScopedNC("pool:allocate", 0x244787);
 
     // No chunks left in the current block, or no any block
     // exists yet. Allocate a new one, passing the chunk size:
@@ -46,12 +50,16 @@ auto PoolAllocator::allocate(std::size_t size) -> void* {
 
 auto PoolAllocator::allocate_block(std::size_t chunk_size) -> Chunk* {
 
+    ZoneScopedNC("pool:allocate_block", 0x244787);
+
     const std::size_t block_size{m_chunks_per_block * chunk_size};
     const std::size_t multiplier = static_cast<std::size_t>(1) << m_blocks.size();
     const std::size_t final_size{multiplier * block_size};
 
     // The first chunk of the new block.
     auto* block_begin = reinterpret_cast<Chunk*>(malloc(final_size));
+
+    TracyAllocN(block_begin, final_size, "pool");
 
     // Track total size
     m_total_size += final_size;
@@ -75,6 +83,8 @@ auto PoolAllocator::allocate_block(std::size_t chunk_size) -> Chunk* {
 
 auto PoolAllocator::deallocate(void* chunk, std::size_t /*size*/) -> void {
 
+    ZoneScopedNC("pool:deallocate", 0x244787);
+
     // The freed chunk's next pointer points to the
     // current allocation pointer:
     reinterpret_cast<Chunk*>(chunk)->next = m_allocation_ptr;
@@ -86,4 +96,15 @@ auto PoolAllocator::deallocate(void* chunk, std::size_t /*size*/) -> void {
 
 auto PoolAllocator::getPoolSize() const -> std::size_t {
     return m_total_size;
+}
+
+PoolAllocator::~PoolAllocator() {
+
+    ZoneScopedNC("pool:destructor", 0x244787);
+
+    while(!m_blocks.empty()) {
+        TracyFreeN(m_blocks.front(), "pool");
+        delete m_blocks.front();
+        m_blocks.pop_front();
+    }
 }

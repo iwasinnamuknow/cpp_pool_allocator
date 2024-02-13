@@ -26,7 +26,6 @@
 
 #include <cstdint>
 #include <list>
-#include <tracy/Tracy.hpp>
 #include "Chunk.hpp"
 
 /**
@@ -61,6 +60,8 @@ public:
      * \brief Get the total size of the pool
      */
     auto getPoolSize() const -> std::size_t;
+
+    ~PoolAllocator();
 
 private:
     /**
