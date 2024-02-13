@@ -19,6 +19,9 @@ project(pool_allocator)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(pool_allocator main.cpp PoolAllocator.cpp)
+add_executable(pool_allocator
+        main.cpp
+        src/PoolAllocator.cpp
+)
 target_include_directories(pool_allocator PUBLIC ${tracy_SOURCE_DIR}/public)
 target_link_libraries(pool_allocator PUBLIC TracyClient)

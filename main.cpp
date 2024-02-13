@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Object.hpp"
+#include "src/Object.hpp"
 
 using std::cout;
 using std::endl;
