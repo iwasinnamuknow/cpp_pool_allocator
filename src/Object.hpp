@@ -25,31 +25,31 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 #include "PoolAllocator.hpp"
 #include <tracy/Tracy.hpp>
 
 /**
- * The `Object` structure uses custom allocator,
- * overloading `new`, and `delete` operators.
+ * The Object implements a custom allocator, overloading new and delete operators.
+ * Calls to new and delete will be intercepted and redirected to our pool instance
  */
 struct Object {
 
     // Object data, 16 bytes:
+    std::array<std::uint64_t, 2> data{};
 
-    std::uint64_t data[2];
-
-    // Declare out custom allocator for
-    // the `Object` structure:
-
+    // Declare our custom allocator for the Object
     static PoolAllocator allocator;
 
-    static void *operator new(std::size_t size) {
-        auto ptr = allocator.allocate(size);
+    // Overload new to use our pool
+    static auto operator new(std::size_t size) -> void* {
+        auto* ptr = allocator.allocate(size);
         TracyAllocN(ptr, sizeof(Object), "object");
         return ptr;
     }
 
-    static void operator delete(void *ptr, std::size_t size) {
+    // Overload deletes as well
+    static auto operator delete(void* ptr, std::size_t size) -> void {
         TracyFreeN(ptr, "object");
         return allocator.deallocate(ptr, size);
     }
