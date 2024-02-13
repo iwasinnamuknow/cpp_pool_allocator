@@ -23,77 +23,63 @@
 //
 
 #include "PoolAllocator.hpp"
-#include <iostream>
 
-/**
- * Returns the first free chunk in the block.
- *
- * If there are no chunks left in the block,
- * allocates a new block.
- */
-void *PoolAllocator::allocate(std::size_t size) {
+auto PoolAllocator::allocate(std::size_t size) -> void* {
 
     // No chunks left in the current block, or no any block
     // exists yet. Allocate a new one, passing the chunk size:
-
-    if (mAlloc == nullptr) {
-        mAlloc = allocateBlock(size);
+    if (m_allocation_ptr == nullptr) {
+        m_allocation_ptr = allocate_block(size);
     }
 
     // the allocation pointer:
-
-    Chunk *freeChunk = mAlloc;
+    Chunk* free_chunk = m_allocation_ptr;
 
     // Advance (bump) the allocation pointer to the next chunk.
     //
-    // When no chunks left, the `mAlloc` will be set to `nullptr`, and
+    // When no chunks left, the `m_allocation_ptr` will be set to `nullptr`, and
     // this will cause allocation of a new block on the next request:
+    m_allocation_ptr = m_allocation_ptr->next;
 
-    mAlloc = mAlloc->next;
-
-    return freeChunk;
+    return free_chunk;
 }
 
-/**
- * Allocates a new block from OS.
- *
- * Returns a Chunk pointer set to the beginning of the block.
- */
-Chunk *PoolAllocator::allocateBlock(std::size_t chunkSize) {
-    std::cout << "\nAllocating block (" << mChunksPerBlock << " chunks):\n\n";
+auto PoolAllocator::allocate_block(std::size_t chunk_size) -> Chunk* {
 
-    size_t blockSize = mChunksPerBlock * chunkSize;
+    const std::size_t block_size{m_chunks_per_block * chunk_size};
+    const std::size_t multiplier = static_cast<std::size_t>(1) << m_blocks.size();
+    const std::size_t final_size{multiplier * block_size};
 
     // The first chunk of the new block.
-    auto *blockBegin = reinterpret_cast<Chunk *>(malloc(blockSize));
+    auto* block_begin = reinterpret_cast<Chunk*>(malloc(final_size));
+
+    // Track total size
+    m_total_size += final_size;
+
+    // Add the block to the list
+    m_blocks.push_back(block_begin);
 
     // Once the block is allocated, we need to chain all
     // the chunks in this block:
-
-    Chunk *chunk = blockBegin;
-
-    for (int i = 0; i < mChunksPerBlock - 1; ++i) {
-        chunk->next = reinterpret_cast<Chunk *>(reinterpret_cast<char *>(chunk) + chunkSize);
+    Chunk* chunk = block_begin;
+    for (int i = 0; i < (m_chunks_per_block * multiplier) - 1; ++i) {
+        chunk->next = reinterpret_cast<Chunk*>(reinterpret_cast<char*>(chunk) + chunk_size);
         chunk = chunk->next;
     }
 
+    // Mark the chunk as used
     chunk->next = nullptr;
 
-    return blockBegin;
+    return block_begin;
 }
 
-/**
- * Puts the chunk into the front of the chunks list.
- */
-void PoolAllocator::deallocate(void *chunk, size_t size) {
+auto PoolAllocator::deallocate(void* chunk, std::size_t /*size*/) -> void {
 
     // The freed chunk's next pointer points to the
     // current allocation pointer:
-
-    reinterpret_cast<Chunk *>(chunk)->next = mAlloc;
+    reinterpret_cast<Chunk*>(chunk)->next = m_allocation_ptr;
 
     // And the allocation pointer is now set
     // to the returned (free) chunk:
-
-    mAlloc = reinterpret_cast<Chunk *>(chunk);
+    m_allocation_ptr = reinterpret_cast<Chunk*>(chunk);
 }

@@ -25,41 +25,63 @@
 #pragma once
 
 #include <cstdint>
+#include <list>
 #include <tracy/Tracy.hpp>
 #include "Chunk.hpp"
 
 /**
- * The allocator class.
+ * \brief A pool allocator implementation
  *
  * Features:
  *
- *   - Parametrized by number of chunks per block
- *   - Keeps track of the allocation pointer
+ *   - Parameterized by initial number of chunks per block, defaults to 128
+ *   - Keeps track of the allocation pointer, blocks and total allocation size
  *   - Bump-allocates chunks
- *   - Requests a new larger block when needed
- *
+ *   - Requests a new block when needed, block size will increase * (1 << num_blocks) each time
  */
 class PoolAllocator {
 public:
-    PoolAllocator(std::size_t chunksPerBlock)
-            : mChunksPerBlock(chunksPerBlock) {}
+    PoolAllocator() = default;
+    explicit PoolAllocator(std::size_t chunks_per_block) : m_chunks_per_block(chunks_per_block) {}
 
-    void* allocate(std::size_t size);
-    void deallocate(void *ptr, std::size_t size);
+    /**
+     * \brief Returns the first free chunk in the block
+     *
+     * If there are no chunks left in the block,
+     * allocates a new block.
+     */
+    auto allocate(std::size_t size) -> void*;
+
+    /**
+     * \brief Puts the chunk into the front of the chunks list
+     */
+    auto deallocate(void* ptr, std::size_t size) -> void;
 
 private:
     /**
-     * Number of chunks per larger block.
+     * Initial number of chunks per larger block.
      */
-    std::size_t mChunksPerBlock;
+    std::size_t m_chunks_per_block{128};
 
     /**
-     * Allocation pointer.
+     * Total allocation size
      */
-    Chunk *mAlloc = nullptr;
+    std::size_t m_total_size{0};
 
     /**
-     * Allocates a larger block (pool) for chunks.
+     * Track start of each block so we can free later
      */
-    Chunk *allocateBlock(std::size_t chunk_size);
+    std::list<Chunk*> m_blocks{};
+
+    /**
+     * Pointer to the next free chunk
+     */
+    Chunk* m_allocation_ptr = nullptr;
+
+    /**
+     * \brief Allocates a new block from OS
+     *
+     * Returns a Chunk pointer set to the beginning of the block.
+     */
+    auto allocate_block(std::size_t chunk_size) -> Chunk*;
 };
