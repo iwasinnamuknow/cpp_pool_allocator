@@ -83,3 +83,7 @@ auto PoolAllocator::deallocate(void* chunk, std::size_t /*size*/) -> void {
     // to the returned (free) chunk:
     m_allocation_ptr = reinterpret_cast<Chunk*>(chunk);
 }
+
+auto PoolAllocator::getPoolSize() const -> std::size_t {
+    return m_total_size;
+}

@@ -41,8 +41,8 @@
  */
 class PoolAllocator {
 public:
-    PoolAllocator() = default;
-    explicit PoolAllocator(std::size_t chunks_per_block) : m_chunks_per_block(chunks_per_block) {}
+    PoolAllocator() noexcept = default;
+    explicit PoolAllocator(std::size_t chunks_per_block) noexcept : m_chunks_per_block(chunks_per_block) {}
 
     /**
      * \brief Returns the first free chunk in the block
@@ -56,6 +56,11 @@ public:
      * \brief Puts the chunk into the front of the chunks list
      */
     auto deallocate(void* ptr, std::size_t size) -> void;
+
+    /**
+     * \brief Get the total size of the pool
+     */
+    auto getPoolSize() const -> std::size_t;
 
 private:
     /**
