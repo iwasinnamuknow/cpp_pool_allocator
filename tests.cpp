@@ -34,17 +34,25 @@ constexpr std::size_t object_count{100};
 constexpr std::size_t chunks_per_block{16};
 PoolAllocator Object::allocator{chunks_per_block};
 
+/**
+ * Lazy allocation means the pool should be of zero size before the first Object
+ * is created inside it.
+ */
 TEST_CASE("Initial pool size is zero", "[pool_allocator]") {
 
     ZoneScopedNC("test:initial_pool_size", 0x13a134);
 
     // Do not initialize any objects yet
-    std::array<Object*, object_count> objects{};
+    [[maybe_unused]] std::array<Object*, object_count> objects{};
 
     // Pool size should be zero
     REQUIRE(Object::allocator.getPoolSize() == 0);
 }
 
+/**
+ * After the first object initialization, the pool size should equate to the Object
+ * size multiplied by the number of initial chunks per block.
+ */
 TEST_CASE("First allocation size", "[pool_allocator]") {
 
     ZoneScopedNC("test:small_pool_size", 0x13a134);
@@ -64,6 +72,10 @@ TEST_CASE("First allocation size", "[pool_allocator]") {
     }
 }
 
+/**
+ * We can calculate how big the pool should be after initializing many Objects and
+ * compare that to the actual pool size.
+ */
 TEST_CASE("Total allocation size", "[pool_allocator]") {
 
     ZoneScopedNC("test:larger_pool_size", 0x13a134);
@@ -94,6 +106,11 @@ TEST_CASE("Total allocation size", "[pool_allocator]") {
     }
 }
 
+/**
+ * Initialize N Objects, delete them and reinitialize again. The pool should not have
+ * allocated any additional space for the second group of Objects. The blocks should
+ * be fully reused
+ */
 TEST_CASE("Block reuse", "[pool_allocator]") {
 
     ZoneScopedNC("test:block_reuse", 0x13a134);
