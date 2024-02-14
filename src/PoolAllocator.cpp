@@ -39,6 +39,8 @@ auto PoolAllocator::allocate(std::size_t size) -> void* {
     // the allocation pointer:
     Chunk* free_chunk = m_allocation_ptr;
 
+    assert(free_chunk != nullptr && "Can't return a null chunk");
+
     // Advance (bump) the allocation pointer to the next chunk.
     //
     // When no chunks left, the `m_allocation_ptr` will be set to `nullptr`, and
@@ -58,6 +60,8 @@ auto PoolAllocator::allocate_block(std::size_t chunk_size) -> Chunk* {
 
     // The first chunk of the new block.
     auto* block_begin = reinterpret_cast<Chunk*>(malloc(final_size));
+
+    assert(block_begin != nullptr && "Got a null pointer for a block");
 
     TracyAllocN(block_begin, final_size, "pool");
 
