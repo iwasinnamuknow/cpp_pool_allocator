@@ -24,6 +24,7 @@
 
 #include <tracy/Tracy.hpp>
 #include <cstdlib>
+#include <cassert>
 #include "PoolAllocator.hpp"
 
 auto PoolAllocator::allocate(std::size_t size) -> void* {
@@ -74,7 +75,7 @@ auto PoolAllocator::allocate_block(std::size_t chunk_size) -> Chunk* {
     // Once the block is allocated, we need to chain all
     // the chunks in this block:
     Chunk* chunk = block_begin;
-    for (int i = 0; i < (m_chunks_per_block * multiplier) - 1; ++i) {
+    for (std::size_t i{0}; i < (m_chunks_per_block * multiplier) - 1; ++i) {
         chunk->next = reinterpret_cast<Chunk*>(reinterpret_cast<char*>(chunk) + chunk_size);
         chunk = chunk->next;
     }
