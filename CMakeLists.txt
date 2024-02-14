@@ -1,7 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
-
-set(TRACY_NO_EXIT 1)
-set(TRACY_ENABLE 1)
+cmake_minimum_required(VERSION 3.20)
 
 include(FetchContent)
 FetchContent_Declare (
@@ -26,13 +23,13 @@ find_package(snitch CONFIG REQUIRED)
 
 project(pool_allocator)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 98)
 
 add_executable(pool_allocator
         tests.cpp
         src/PoolAllocator.cpp
 )
-target_include_directories(pool_allocator PUBLIC
+target_include_directories(pool_allocator SYSTEM PUBLIC
         ${tracy_SOURCE_DIR}/public
         ${snitch_SOURCE_DIR}/include
 )
@@ -40,3 +37,10 @@ target_link_libraries(pool_allocator PUBLIC
         TracyClient
         snitch::snitch
 )
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif ()

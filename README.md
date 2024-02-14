@@ -1,18 +1,41 @@
 # Pool Allocator for C++
 
 I'm a total amateur, just poking around at things I have no business playing with. Don't take anything
-here as fact, this is purely an exploration.
+here as fact, this is purely an exploration of something I've never tried before.
 
 This started as an implementation of the Pool Allocator by [Dmitry Soshnikov](http://dmitrysoshnikov.com/compilers/writing-a-pool-allocator/). I have 
 used it as a base to test ideas, it is not suitable for production use.
 
 ## Features
 
-* Simple usage, see [Object](src/Object.hpp)
-* Bump allocator with lazy allocation
+* Compiles under C++98 or higher
+* Simple usage, see [Object](src/Object.hpp) and [tests](tests.cpp)
+* Lazy bump-allocator
 * Tracks blocks for later free'ing
 * Ensures efficient reuse of blocks
 * Profiler instrumentation with [Tracy](https://github.com/wolfpld/tracy)
+* Exponential block size increase
+
+## Building
+
+Simple dependencies:
+
+* CMake
+* GCC/Clang/MSVC
+* Git
+
+Run CMake configuration. Available presets are: 
+
+ * `linux-debug`
+ * `linux-debug-profile`
+ * `linux-release`
+ * `linux-release-profile`
+
+`$ cmake --preset=<preset>`
+
+Then build
+
+`$ cmake --build --preset=<preset>`
 
 ## Operation
 
@@ -20,13 +43,13 @@ A class can have a static pool allocator which will be used for all allocations.
 not allocate any space. Once the first object is created by overloading `operator new` and `operator
 delete`, the first block will be allocated based on the object size and the number of chunks per block.
 
-If the pool is initialized with no parameter, it will default to `128` chunks per block. Providing
+If the pool is initialised with no parameter, it will default to `128` chunks per block. Providing
 a parameter will override this default. When all the space is allocated to objects, the pool will request
 a new block that will be twice the size of the previous, growing exponentially.
 
 ## Thoughts
 
-I have only a vague idea what I'm doing with this. I understand the need for cache and memory coherency
+I have only a vague idea what I'm doing with this. I understand the need for cache and memory coherency,
 but I do not know enough to understand if what I'm doing is correct - I am profiling with Tracy and running
 `perf` to check cache hits/misses but I don't fully understand the results. 
 
@@ -61,3 +84,14 @@ build/release$ perf stat -B -e cache-references:u,cache-misses:u,cycles,instruct
 
 I'm a long way past premature optimisation and I will not proceed any further in terms of optimisation.
 I plan to polish the project and perform some more benchmarking vs other solutions.
+
+### Native Optimisations
+
+While tidying up the project to put it to bed I realised I wasn't compiling with native CPU optimisations. While I only
+have a surface knowledge of this, I decided to enable and run the tests again. A lot of the uneven timings look a lot
+smoother and overall runtime is reduced massively in all cases. The largest interruptions I'm seeing now are on the
+of 1.5us, which seems reasonable (again no knowledge to back this up).
+
+![Native optimisation timing](native_op_timing.png)
+
+Perf stats didn't change in any notable way, cache miss percentages are within variation.

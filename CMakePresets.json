@@ -1,0 +1,163 @@
+{
+    "version": 2,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base-linux",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_EXE_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now",
+                "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now",
+                "TRACY_ENABLE": false
+            }
+        },
+        {
+            "name": "linux-debug",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/linux/debug",
+            "inherits": [ "base-linux" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_VERBOSE_MAKEFILE": "ON",
+                "CMAKE_CXX_FLAGS": "--coverage -fstack-protector-strong -fcf-protection=full -fstack-clash-protection -Wall -Wextra -Wpedantic -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast"
+            }
+        },
+        {
+            "name": "linux-debug-profile",
+            "hidden": false,
+            "inherits": ["linux-debug"],
+          "binaryDir": "${sourceDir}/build/linux/debug-profile",
+            "cacheVariables": {
+                "TRACY_ENABLE": true,
+                "TRACY_NO_EXIT": true
+            }
+        },
+        {
+            "name": "linux-release",
+            "hidden": false,
+            "inherits": [ "base-linux" ],
+            "binaryDir": "${sourceDir}/build/linux/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_CXX_FLAGS": "-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fcf-protection=full -fstack-clash-protection"
+            }
+        },
+        {
+          "name": "linux-release-profile",
+          "hidden": false,
+          "inherits": [
+            "linux-release"
+          ],
+          "binaryDir": "${sourceDir}/build/linux/release-profile",
+          "cacheVariables": {
+              "TRACY_ENABLE": true,
+              "TRACY_NO_EXIT": true
+          }
+        },
+      {
+            "name": "base-windows",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "/bigobj /sdl /guard:cf /utf-8 /diagnostics:caret /w14165 /w44242 /w44254 /w44263 /w34265 /w34287 /w44296 /w44365 /w44388 /w44464 /w14545 /w14546 /w14547 /w14549 /w14555 /w34619 /w34640 /w24826 /w14905 /w14906 /w14928 /w45038 /W4 /permissive- /volatile:iso /Zc:inline /Zc:preprocessor /Zc:enumTypes /Zc:lambda /Zc:__cplusplus /Zc:externConstexpr /Zc:throwingNew /EHsc",
+                "CMAKE_EXE_LINKER_FLAGS": "/ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS /machine:x64 /guard:cf",
+                "TRACY_ENABLE": false
+            },
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64"
+        },
+        {
+            "name": "windows-debug",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/win/debug",
+            "inherits": [ "base-windows" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-debug-profile",
+            "hidden": false,
+            "binaryDir": "${sourceDir}/build/win/debug-profile",
+            "inherits": ["windows-debug"],
+            "cacheVariables": {
+                "TRACY_ENABLE": true,
+                "TRACY_NO_EXIT": true
+            }
+        },
+        {
+            "name": "windows-release",
+            "hidden": false,
+            "inherits": [ "base-windows" ],
+            "binaryDir": "${sourceDir}/build/win/release",
+            "cacheVariables": {
+
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "windows-release-profile",
+            "hidden": false,
+            "inherits": [ "windows-release" ],
+            "binaryDir": "${sourceDir}/build/win/release-profile",
+            "cacheVariables": {
+
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "linux-debug",
+            "configurePreset": "linux-debug",
+            "configuration": "Debug",
+            "jobs": 4
+        },
+        {
+            "name": "linux-debug-profile",
+            "configurePreset": "linux-debug-profile",
+            "configuration": "Debug",
+            "jobs": 4
+        },
+        {
+            "name": "linux-release",
+            "configurePreset": "linux-release",
+            "configuration": "Release",
+            "jobs": 4
+        },
+        {
+            "name": "linux-release-profile",
+            "configurePreset": "linux-release-profile",
+            "configuration": "Release",
+            "jobs": 4
+        },
+        {
+            "name": "windows-release",
+            "configurePreset": "windows-release",
+            "configuration": "Release",
+            "jobs": 4
+        },
+        {
+            "name": "windows-debug",
+            "configurePreset": "windows-debug",
+            "configuration": "Debug",
+            "jobs": 4
+        },
+        {
+            "name": "windows-debug-profile",
+            "configurePreset": "windows-debug-profile",
+            "configuration": "Debug",
+            "jobs": 4
+        },
+        {
+            "name": "windows-release-profile",
+            "configurePreset": "windows-release-profile",
+            "configuration": "Release",
+            "jobs": 4
+        }
+    ]
+}
