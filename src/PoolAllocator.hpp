@@ -63,6 +63,12 @@ public:
 
     ~PoolAllocator();
 
+    PoolAllocator(const PoolAllocator&) = delete;
+    PoolAllocator(PoolAllocator&&) = delete;
+
+    auto operator=(const PoolAllocator&) -> PoolAllocator& = delete;
+    auto operator=(PoolAllocator&&) -> PoolAllocator = delete;
+
 private:
     /**
      * Initial number of chunks per larger block.
